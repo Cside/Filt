@@ -13,18 +13,18 @@ sub get {
               . "/favorite?threshold="
               . __PACKAGE__->CONF->{_}->{threshold};
     my $scraper = scraper {
-        process "ul#bookmarked_user > li", 'entries[]' => scraper {
-            process "h3.entry > a.entry-link",
+        process "ul.main-entry-list > li", 'entries[]' => scraper {
+            process "h3.entry-title a.entry-link",
                     title => "TEXT";
-            process "h3.entry > a.entry-link",
+            process "h3.entry-title a.entry-link",
                     url => ['@href', sub { $_->as_string }];
             process "ul > li.category > a.category-link",
                     category => ['@href', sub { substr $_->path, 10 }];
-            process "div.comment > ul.comment > li > a.username",
+            process "ul.entry-comment > li > a.username",
                     'users[]' => 'TEXT';
-            process "div.comment > ul.comment > li > span.timestamp",
+            process "ul.entry-comment > li > span.timestamp",
                     timestamp => ['TEXT', sub { sprintf "%04d-%02d-%02dT00:00:00Z", $_ =~ m#(\d{4})/(\d{2})/(\d{2})# }];
-            process "div.comment > ul.comment > li",
+            process "ul.entry-comment > li",
                     'comments[]' => 'HTML';
         };
     };
