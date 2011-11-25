@@ -13,62 +13,53 @@ our $AUTOLOAD;
 sub do {
     my ($class, $data) = @_;
     my $self = bless { data => $data }, $class;
-    $self->filter_by_urls
-    ->filter_by_words
-    ->filter_by_categories
-    ->filter_by_already_bookmarked
-    ->filter_by_recent_bookmarked
-    ->data
-    ;
+    $self
+    ->filter_by('urls')
+    ->filter_by('words')
+    ->filter_by('categories')
+    ->filter_by('already_bookmarked')
+    ->filter_by('recent_bookmarked')
+    ->data;
 }
 
-sub AUTOLOAD {
-    my ($self) = @_;
-
-    (my $method = $AUTOLOAD) =~ s/.+:://;
-    return if $method eq 'DESTROY';
+sub filter_by {
+    my ($self, $key) = @_;
 
     my %handler = (
         words => sub {
+            my ($entry, $ignore_case) = @_;
             grep {
-                decode_utf8($_[0]->{title}) =~ /$_/i
-            }
-            split(/,/, decode_utf8 $_[1])
+                decode_utf8($entry->{title}) =~ /$_/i
+            } split(/,/, decode_utf8 $ignore_case)
         },
         categories => sub {
             my @corresp = qw/social economics life entertainment knowledge it game fun/;
-            grep { $_[0]->{category} eq $_ }
+            grep { $entry->{category} eq $_ }
             map { $corresp[$_ - 1]; }
-            split(/,/, $_[1])
+            split(/,/, $ignore_case)
         },
         urls => sub {
-            grep { $_[0]->{url} =~ /$_/i }
-            split(/,/,  $_[1])
+            grep { $entry->{url} =~ /$_/i }
+            split(/,/,  $ignore_case)
         },
         already_bookmarked => sub {
             grep { $_ eq __PACKAGE__->CONF->{_}->{username} }
-            @{$_[0]->{users}}
+            @{$entry->{users}}
         },
         recent_bookmarked => sub {
-            $_[0]->{users}->[0] eq __PACKAGE__->CONF->{_}->{username}
+            $entry->{users}->[0] eq __PACKAGE__->CONF->{_}->{username}
         },
     );
 
-    if ($method =~ /^filter_by_(.+)$/o) {
-        $self->filter($1, $handler{$1});
-    }
-}
+    if (my $method = $handler{$key}) {
+        my $ignore_case = __PACKAGE__->CONF->{_}->{'ignore_' . $key});
+        my @filtered = grep {
+            ! $method->($_, $ignore_case)
+        } @{$self->data};
 
-sub filter {
-    my ($self, $key, $cb) = @_;
-    my $ignore;
-    if ($key) {
-        $ignore = __PACKAGE__->CONF->{_}->{'ignore_' . $key} or return $self;
+        $self->data(\@filtered);
     }
-    my @filtered = grep {
-        ! scalar( $cb->($_, $ignore) );
-    } @{$self->data};
-    $self->data(\@filtered);
+
     $self;
 }
 
