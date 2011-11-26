@@ -2,7 +2,7 @@ package Filt::View::Atom;
 use strict;
 use warnings;
 use utf8;
-use parent qw/Filt::Config/;
+use Filt::Config qw/conf/;
 use Digest::MD5 qw/md5_base64/;
 use XML::Feed;
 use XML::Feed::Entry;
@@ -22,7 +22,7 @@ sub render {
 }
 
 sub feed {
-    my $username = __PACKAGE__->CONF->{_}->{username};
+    my $username = conf->{username};
     my $web_url = 'http://b.hatena.ne.jp/' . $username . '/favorite';
 
     my $feed = XML::Feed->new('Atom');

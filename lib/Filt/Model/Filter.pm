@@ -6,7 +6,7 @@ use Encode;
 use Class::Accessor::Lite (
     rw => [ qw/data/ ],
 );
-use parent qw/Filt::Config/;
+use Filt::Config qw/conf/;
 
 our $AUTOLOAD;
 
@@ -25,34 +25,44 @@ sub do {
 sub filter_by {
     my ($self, $key) = @_;
 
+        use Data::Dump qw/dump/;
     my %handler = (
         words => sub {
             my ($entry, $ignore_case) = @_;
+            warn dump $entry;
             grep {
                 decode_utf8($entry->{title}) =~ /$_/i
             } split(/,/, decode_utf8 $ignore_case)
         },
         categories => sub {
+            my ($entry, $ignore_case) = @_;
+            warn dump $entry;
             my @corresp = qw/social economics life entertainment knowledge it game fun/;
             grep { $entry->{category} eq $_ }
             map { $corresp[$_ - 1]; }
             split(/,/, $ignore_case)
         },
         urls => sub {
+            my ($entry, $ignore_case) = @_;
+            warn dump $entry;
             grep { $entry->{url} =~ /$_/i }
             split(/,/,  $ignore_case)
         },
         already_bookmarked => sub {
-            grep { $_ eq __PACKAGE__->CONF->{_}->{username} }
+            my ($entry) = @_;
+            warn dump $entry;
+            grep { $_ eq conf->{username} }
             @{$entry->{users}}
         },
         recent_bookmarked => sub {
-            $entry->{users}->[0] eq __PACKAGE__->CONF->{_}->{username}
+            my ($entry) = @_;
+            warn dump $entry;
+            $entry->{users}->[0] eq conf->{username}
         },
     );
 
     if (my $method = $handler{$key}) {
-        my $ignore_case = __PACKAGE__->CONF->{_}->{'ignore_' . $key});
+        my $ignore_case = conf->{'ignore_' . $key};
         my @filtered = grep {
             ! $method->($_, $ignore_case)
         } @{$self->data};
