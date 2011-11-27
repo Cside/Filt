@@ -3,33 +3,33 @@ use strict;
 use warnings;
 use utf8;
 use URI;
-use Web::Scraper;
 use Filt::Config qw/conf/;
+use Web::Query;
 
 sub get {
     my ($class) = @_;
-    my $url = "http://b.hatena.ne.jp/"
-              . conf->{username}
-              . "/favorite?threshold="
-              . conf->{threshold};
-    my $scraper = scraper {
-        process "ul.main-entry-list > li", 'entries[]' => scraper {
-            process "h3.entry-title a.entry-link",
-                    title => "TEXT";
-            process "h3.entry-title a.entry-link",
-                    url => ['@href', sub { $_->as_string }];
-            process "ul > li.category > a.category-link",
-                    category => ['@href', sub { substr $_->path, 10 }];
-            process "ul.entry-comment > li img.profile-image",
-                    'users[]' => '@alt';
-            process "ul.entry-comment > li > span.timestamp",
-                    timestamp => ['TEXT', sub { sprintf "%04d-%02d-%02dT00:00:00Z", $_ =~ m#(\d{4})/(\d{2})/(\d{2})# }];
-            process "ul.entry-comment > li",
-                    'comments[]' => 'HTML';
-        };
-    };
-    my $res = eval { $scraper->scrape(URI->new($url)) };
-    $@ ? undef : $res->{entries};
+    my $url = sprintf "http://b.hatena.ne.jp/%s/favorite?threshold=%d", conf->{username}, conf->{threshold};
+    
+    wq($url)->find('ul.main-entry-list > li')->map(sub {
+        my $entry = $_;
+        +{
+            title     => $entry->find('h3.entry-title a.entry-link')->text,
+            url       => $entry->find('h3.entry-title a.entry-link')->attr('href'),
+            category  => substr($entry->find('ul > li.category > a.category-link')->attr('href'), 10),
+            timestamp => sprintf("%04d-%02d-%02dT00:00:00Z",
+                             $entry->find('ul.entry-comment > li > .timestamp')->text =~ m#(\d{4})/(\d{2})/(\d{2})#
+                         ),
+            users     => $entry->find('ul.entry-comment > li img.profile-image')->map(sub {$_->attr('alt')}),
+            comments  => $entry->find('ul.entry-comment > li')
+                         ->map(sub {
+                             join(" ",
+                                 join(" ", @{$_->find('.header > *')->map(sub {$_->html})}),
+                                 $_->find('.comment')->text,
+                                 $_->find('.timestamp')->text
+                             );
+                         }),
+        }
+    });
 }
 
 1;

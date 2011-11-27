@@ -25,18 +25,15 @@ sub do {
 sub filter_by {
     my ($self, $key) = @_;
 
-        use Data::Dump qw/dump/;
     my %handler = (
         words => sub {
             my ($entry, $ignore_case) = @_;
-            warn dump $entry;
             grep {
                 decode_utf8($entry->{title}) =~ /$_/i
             } split(/,/, decode_utf8 $ignore_case)
         },
         categories => sub {
             my ($entry, $ignore_case) = @_;
-            warn dump $entry;
             my @corresp = qw/social economics life entertainment knowledge it game fun/;
             grep { $entry->{category} eq $_ }
             map { $corresp[$_ - 1]; }
@@ -44,19 +41,16 @@ sub filter_by {
         },
         urls => sub {
             my ($entry, $ignore_case) = @_;
-            warn dump $entry;
             grep { $entry->{url} =~ /$_/i }
             split(/,/,  $ignore_case)
         },
         already_bookmarked => sub {
             my ($entry) = @_;
-            warn dump $entry;
             grep { $_ eq conf->{username} }
             @{$entry->{users}}
         },
         recent_bookmarked => sub {
             my ($entry) = @_;
-            warn dump $entry;
             $entry->{users}->[0] eq conf->{username}
         },
     );

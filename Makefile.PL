@@ -11,7 +11,7 @@ requires 'Digest::MD5';
 requires 'Carp';
 requires 'Config::Tiny';
 requires 'URI';
-requires 'Web::Scraper';
+requires 'Web::Query';
 requires 'XML::Atom::Feed';
 requires 'XML::Atom::Entry';
 requires 'XML::Feed';
