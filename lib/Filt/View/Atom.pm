@@ -12,30 +12,20 @@ use DateTime::Format::W3CDTF;
 sub render {
     my ($class, $data) = @_;
     my $self = bless {}, $class;
-    my $feed = feed();
+    
+    my $username = conf->{username};
+    my $url = 'http://b.hatena.ne.jp/' . $username . '/favorite';
 
-    for (@$data) {
-        my $entry = entry($_);
-        $feed->add_entry($entry);
-    }
+    my $feed = XML::Feed->new('Atom');
+    $feed->title($username . 'のブックマーク');
+    $feed->id(url_to_id($url));
+    $feed->author($username);
+
+    $feed->add_entry(to_entry($_)) for @$data;
     $feed->as_xml;
 }
 
-sub feed {
-    my $username = conf->{username};
-    my $web_url = 'http://b.hatena.ne.jp/' . $username . '/favorite';
-
-    my $feed = XML::Feed->new('Atom');
-
-    $feed->title($username . 'のブックマーク');
-    $feed->id(id($web_url));
-
-    $feed->author($username);
-
-    $feed;
-}
-
-sub entry {
+sub to_entry {
     my ($data) = @_;
     my %category_label = (
         social        => '社会',
@@ -50,40 +40,22 @@ sub entry {
 
     my $entry = XML::Feed::Entry->new('Atom');
     $entry->title($data->{title});
-    $entry->id(id($data->{url}));
+    $entry->id(url_to_id($data->{url}));
 
-    my $w3c = DateTime::Format::W3CDTF->new;
-    $entry->modified($w3c->parse_datetime($data->{timestamp}));
+    my $dt = DateTime::Format::W3CDTF->new;
+    $entry->modified($dt->parse_datetime($data->{timestamp}));
 
     $entry->link($data->{url});
 
     $entry->category($category_label{$data->{category}});
 
     my $content = $entry->content;
-    $content->body(comments(@{$data->{comments}}));
+    $content->body(join "<br/>", $data->{summary}, @{$data->{comments}});
     $entry->content($content);
 
     $entry;
 }
 
-sub comments {
-    my @comments = @_;
-    join '<br/>', (
-        map { $_ =~ s#<a[^>]+>(.+?)</a>#$1#sg; $_; }
-        map { $_ =~ s#<span class="tags"[^>]+?>(.+?)</span>#<i>$1</i>#sg; $_; }
-        map { $_ =~ s#<a class="username"[^>]+?>(.+?)</a>#<b>$1</b>#s; $_; }
-        map { $_ =~ s#<span class="twitter.+?</span>##g; $_; }
-        map { $_ =~ s#<span class="click-count.+?</span>##g; $_; }
-        map { $_ =~ s#<span class="retweet-count.+?</span>##g; $_; }
-        map { $_ =~ s#<div class="tweets.+?</div>##g; $_; }
-        map { $_ =~ s#<div class="retweet-images.+?</div>##g; $_; }
-        map { $_ =~ s#<span class="hatena-star.+?</span>##g; $_; }
-        @comments
-    );
-}
-
-sub id {
-    'tag:hatena.ne.jp,2011:bookmark-' . md5_base64(shift);
-}
+sub url_to_id { 'tag:hatena.ne.jp,2011:bookmark-' . md5_base64($_[0]) }
 
 1;

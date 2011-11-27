@@ -2,7 +2,6 @@ package Filt::Model::Feed;
 use strict;
 use warnings;
 use utf8;
-use URI;
 use Filt::Config qw/conf/;
 use Web::Query;
 
@@ -20,8 +19,16 @@ sub get {
                              $entry->find('ul.entry-comment > li > .timestamp')->text =~ m#(\d{4})/(\d{2})/(\d{2})#
                          ),
             users     => $entry->find('ul.entry-comment > li img.profile-image')->map(sub {$_->attr('alt')}),
+            summary   => do {
+                             my $summary = $entry->find('.entry-summary')->text;
+                             $summary =~ s/続きを読む// if $summary;
+                             $summary;
+                         },
             comments  => $entry->find('ul.entry-comment > li')
                          ->map(sub {
+                             my $img = $_->find('img');
+                             $img->attr('width',  16);
+                             $img->attr('height', 16);
                              join(" ",
                                  join(" ", @{$_->find('.header > *')->map(sub {$_->html})}),
                                  $_->find('.comment')->text,
