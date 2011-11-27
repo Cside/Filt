@@ -50,6 +50,7 @@ sub to_entry {
     $entry->category($category_label{$data->{category}});
 
     my $content = $entry->content;
+    $content->type('text/html');
     $content->body(join "<br/>", $data->{summary}, @{$data->{comments}});
     $entry->content($content);
 
