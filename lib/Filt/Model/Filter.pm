@@ -8,10 +8,10 @@ use Class::Accessor::Lite (
 );
 use Filt::Config qw/conf/;
 
-our $AUTOLOAD;
-
 sub do {
     my ($class, $data) = @_;
+    use Data::Dump qw/dump/;
+    warn dump $data;
     my $self = bless { data => $data }, $class;
     $self
     ->filter_by('urls')

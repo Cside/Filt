@@ -4,15 +4,19 @@ use warnings;
 use utf8;
 use Filt::Config qw/conf/;
 use Web::Query;
+use HTML::Entities qw/encode_entities/;
+
+sub _encode_entities { encode_entities(shift, q|<>&"'|) }
 
 sub get {
     my ($class) = @_;
     my $url = sprintf "http://b.hatena.ne.jp/%s/favorite?threshold=%d", conf->{username}, conf->{threshold};
-    
+
     wq($url)->find('ul.main-entry-list > li')->map(sub {
         my $entry = $_;
+
         +{
-            title     => $entry->find('h3.entry-title a.entry-link')->text,
+            title     => _encode_entities($entry->find('h3.entry-title a.entry-link')->text),
             url       => $entry->find('h3.entry-title a.entry-link')->attr('href'),
             category  => substr($entry->find('ul > li.category > a.category-link')->attr('href'), 10),
             timestamp => sprintf("%04d-%02d-%02dT00:00:00Z",
@@ -22,19 +26,23 @@ sub get {
             summary   => do {
                              my $summary = $entry->find('.entry-summary')->text;
                              $summary =~ s/続きを読む// if $summary;
-                             $summary;
+                             _encode_entities $summary;
                          },
-            comments  => $entry->find('ul.entry-comment > li')
-                         ->map(sub {
-                             my $img = $_->find('img');
-                             $img->attr('width',  16);
-                             $img->attr('height', 16);
-                             join(" ",
-                                 join(" ", @{$_->find('.header > *')->map(sub {$_->html})}),
-                                 $_->find('.comment')->text,
-                                 $_->find('.timestamp')->text
-                             );
-                         }),
+            comments  => [
+                            grep {$_} @{
+                                $entry->find('ul.entry-comment > li')
+                                ->map(sub {
+                                    my $img = $_->find('img');
+                                    $img->attr('width',  16);
+                                    $img->attr('height', 16);
+                                    my $head = join(" ", @{$_->find('.header > *')->map(sub {$_->html})});
+                                    my $comment = _encode_entities($_->find('.comment')->text);
+                                    my $timestamp = $_->find('.timestamp')->text;
+
+                                    ($head && $timestamp) ? join(" ", $head, $comment, $timestamp) : undef;
+                                })
+                            }
+                         ]
         }
     });
 }

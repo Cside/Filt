@@ -15,7 +15,7 @@ requires 'XML::Feed';
 requires 'XML::Feed::Entry';
 requires 'DateTime';
 requires 'DateTime::Format::W3CDTF';
-
+requires 'HTML::Entities';
 
 test_requires 'Test::More';
 test_requires 'File::Find::Rule';
