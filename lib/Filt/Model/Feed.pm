@@ -6,13 +6,21 @@ use Filt::Config qw/conf/;
 use Web::Query;
 use HTML::Entities qw/encode_entities/;
 
+our $Max_Results = 20;
+
 sub _encode_entities { encode_entities(shift, q|<>&"'|) }
 
 sub get {
     my ($class) = @_;
     my $url = sprintf "http://b.hatena.ne.jp/%s/favorite?threshold=%d", conf->{username}, conf->{threshold};
 
-    wq($url)->find('ul.main-entry-list > li')->map(sub {
+    wq($url)
+    ->find('ul.main-entry-list > li')
+    ->filter(sub {
+        my $i = shift;
+        $i < $Max_Results;
+    })
+    ->map(sub {
         my $entry = $_;
 
         +{
