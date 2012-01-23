@@ -2,7 +2,6 @@ package Filt::Model::Feed;
 use strict;
 use warnings;
 use utf8;
-use Filt::Config qw/conf/;
 use Web::Query;
 use HTML::Entities qw/encode_entities/;
 
@@ -11,10 +10,9 @@ our $MAX_RESULTS = 20;
 sub _encode_entities { encode_entities(shift, q|<>&"'|) }
 
 sub get {
-    my ($class) = @_;
-    my $url = sprintf "http://b.hatena.ne.jp/%s/favorite?threshold=%d", conf->{username}, conf->{threshold};
+    my ($class, $stuff) = @_;
 
-    wq($url)
+    wq($stuff)
     ->find('ul.main-entry-list > li')
     ->filter(sub {
         my $i = shift;
@@ -43,11 +41,20 @@ sub get {
                                     my $img = $_->find('img');
                                     $img->attr('width',  16);
                                     $img->attr('height', 16);
-                                    my $head = join(" ", @{$_->find('.header > *')->map(sub {$_->html})});
-                                    my $comment = _encode_entities($_->find('.comment')->text);
-                                    my $timestamp = $_->find('.timestamp')->text;
+                                    $img = $img->html;
 
-                                    ($head && $timestamp) ? join(" ", $head, $comment, $timestamp) : undef;
+                                    my $username = $_->find('.username')->text;
+                                    my $tags = join ', ', @{
+                                                   $_->find('.user-tag')
+                                                   ->map(sub {
+                                                       sprintf("<span style=\"color:green;\">%s</span>", _encode_entities $_->text || '')
+                                                   })
+                                               };
+                                    my $timestamp = sprintf("<span style=\"color:#999;\">%s</span>", $_->find('.timestamp')->text || '');
+                                    my $comment = _encode_entities($_->find('.comment')->text);
+
+                                    ($username && $timestamp) ? join(" ", $img, $username, $tags, $comment, $timestamp)
+                                                              : undef;
                                 })
                             }
                          ]
