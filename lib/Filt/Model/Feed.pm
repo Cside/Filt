@@ -6,7 +6,7 @@ use Filt::Config qw/conf/;
 use Web::Query;
 use HTML::Entities qw/encode_entities/;
 
-our $Max_Results = 20;
+our $MAX_RESULTS = 20;
 
 sub _encode_entities { encode_entities(shift, q|<>&"'|) }
 
@@ -18,7 +18,7 @@ sub get {
     ->find('ul.main-entry-list > li')
     ->filter(sub {
         my $i = shift;
-        $i < $Max_Results;
+        $i < $MAX_RESULTS;
     })
     ->map(sub {
         my $entry = $_;
