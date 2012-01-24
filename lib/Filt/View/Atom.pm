@@ -51,7 +51,11 @@ sub to_entry {
 
     my $content = $entry->content;
     $content->type('text/html');
-    $content->body(join "<br/>", $data->{summary}, @{$data->{comments}});
+    $content->body(
+        sprintf "<p>%s</p><ul style=\"list-style:none;\">%s</ul>",
+                $data->{summary},
+                join '', map {'<li>' . $_ . '</li>'} @{$data->{comments}}
+    );
     $entry->content($content);
 
     $entry;
