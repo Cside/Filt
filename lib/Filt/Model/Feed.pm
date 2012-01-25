@@ -43,7 +43,8 @@ sub get {
                                     $img->attr('height', 16);
                                     $img = $img->html;
 
-                                    my $username = '<strong>' . $_->find('.username')->text . '</strong>';
+                                    my $username = $_->find('.username')->text or return;
+                                       $username = "<strong>$username</strong>";
                                     my $tags = join ', ', @{
                                                    $_->find('.user-tag')
                                                    ->map(sub {
@@ -51,7 +52,7 @@ sub get {
                                                    })
                                                };
                                     my $timestamp = sprintf("<span style=\"color:#999;\">%s</span>", $_->find('.timestamp')->text || '');
-                                    my $comment = _encode_entities($_->find('.comment')->text);
+                                    my $comment = _encode_entities($_->find('.comment')->text) || '';
 
                                     ($username && $timestamp) ? join(" ", $img, $username, $tags, $comment, $timestamp)
                                                               : undef;
