@@ -44,15 +44,15 @@ sub get {
                                     $img = $img->html;
 
                                     my $username = $_->find('.username')->text or return;
-                                       $username = "<strong>$username</strong>";
+                                       $username = "<strong class=\"username\">$username</strong>";
                                     my $tags = join ', ', @{
                                                    $_->find('.user-tag')
                                                    ->map(sub {
-                                                       sprintf("<span style=\"color:green;\">%s</span>", _encode_entities $_->text || '')
+                                                       sprintf("<span class=\"tag\" style=\"color:green;\">%s</span>", _encode_entities $_->text || '')
                                                    })
                                                };
-                                    my $timestamp = sprintf("<span style=\"color:#999;\">%s</span>", $_->find('.timestamp')->text || '');
-                                    my $comment = _encode_entities($_->find('.comment')->text) || '';
+                                    my $timestamp = sprintf("<span class=\"timestamp\" style=\"color:#999;\">%s</span>", $_->find('.timestamp')->text || '');
+                                    my $comment = '<span class="comment">' . _encode_entities($_->find('.comment')->text) || '' . '</span>';
 
                                     ($username && $timestamp) ? join(" ", $img, $username, $tags, $comment, $timestamp)
                                                               : undef;
