@@ -43,7 +43,7 @@ sub get {
                                     $img->attr('height', 16);
                                     $img = $img->html;
 
-                                    my $username = $_->find('.username')->text;
+                                    my $username = '<strong>' . $_->find('.username')->text . '</strong>';
                                     my $tags = join ', ', @{
                                                    $_->find('.user-tag')
                                                    ->map(sub {
