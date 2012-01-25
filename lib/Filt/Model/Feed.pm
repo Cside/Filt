@@ -24,7 +24,7 @@ sub get {
         +{
             title     => _encode_entities($entry->find('h3.entry-title a.entry-link')->text),
             url       => $entry->find('h3.entry-title a.entry-link')->attr('href'),
-            category  => substr($entry->find('ul > li.category > a.category-link')->attr('href'), 10),
+            category  => substr($entry->find('ul > li.category > a.category-link')->attr('href') || '', 10),
             timestamp => sprintf("%04d-%02d-%02dT00:00:00Z",
                              $entry->find('ul.entry-comment > li > .timestamp')->text =~ m#(\d{4})/(\d{2})/(\d{2})#
                          ),
