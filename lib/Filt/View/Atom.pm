@@ -2,7 +2,6 @@ package Filt::View::Atom;
 use strict;
 use warnings;
 use utf8;
-use Filt::Config qw/conf/;
 use Digest::MD5 qw/md5_base64/;
 use XML::Feed;
 use XML::Feed::Entry;
@@ -10,10 +9,10 @@ use DateTime;
 use DateTime::Format::W3CDTF;
 
 sub render {
-    my ($class, $data) = @_;
+    my ($class, %opt) = @_;
     my $self = bless {}, $class;
-    
-    my $username = conf->{username};
+    my $username = $opt{username};
+    my $data     = $opt{data};
     my $url = 'http://b.hatena.ne.jp/' . $username . '/favorite';
 
     my $feed = XML::Feed->new('Atom');
